@@ -105,16 +105,22 @@ class BitaoDownloaderMiddleware(object):
 
 class JSPageMiddleware(object):
     def process_request(self, request, spider):
-        spider.browser.get("https://weibo.com/")
-        time.sleep(10)
-        loginname = spider.browser.find_element_by_id("loginname")
-        password = spider.browser.find_elements_by_name("password");
-        submitBtn = spider.browser.find_elements_by_xpath('//*[@id="pl_login_form"]/div/div[3]/div[6]/a')
-        loginname.send_keys("15874065601")
-        password[0].send_keys("923469an")
-        submitBtn[0].click()
-        time.sleep(5)
-        searchInput=spider.browser.find_elements_by_xpath('//*[@id="plc_top"]/div/div/div[2]/input')
-        searchSubmit = spider.browser.find_elements_by_xpath('//*[@id="plc_top"]/div/div/div[2]/a')[0]
-        searchInput.send_keys();
-        return HtmlResponse(url=spider.browser.current_url,body=spider.browser.page_source,encoding="utf-8",request=request)
+        if request.url=="https://passport.weibo.cn/signin/login?entry=mweibo&res=wel&wm=3349&r=http%3A%2F%2Fm.weibo.cn%2F":
+            spider.browser.get(request.url)
+            time.sleep(5)
+            loginname = spider.browser.find_element_by_id("loginName")
+            password = spider.browser.find_element_by_id("loginPassword");
+            submitBtn = spider.browser.find_element_by_id("loginAction")
+            loginname.send_keys("15874065601")
+            password.send_keys("923469an")
+            submitBtn.click()
+            time.sleep(5)
+            # searchInput=spider.browser.find_elements_by_xpath('//*[@id="plc_top"]/div/div/div[2]/input')
+            # searchSubmit = spider.browser.find_elements_by_xpath('//*[@id="plc_top"]/div/div/div[2]/a')[0]
+            # searchInput.send_keys();
+            return HtmlResponse(url=spider.browser.current_url,body=spider.browser.page_source,encoding="utf-8",request=request)
+        elif request.url =="https://m.weibo.cn/u/2145291155?uid=2145291155":
+            spider.browser.get(request.url)
+            time.sleep(10)
+            return HtmlResponse(url=spider.browser.current_url, body=spider.browser.page_source, encoding="utf-8",
+                                request=request)
