@@ -1,7 +1,16 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import time
+
+import sys
+from scrapy.http.cookies import CookieJar
+import json
+
 from selenium import webdriver
+
+from bitao.items import BitaoItem
+reload(sys)
+sys.setdefaultencoding('utf-8')
 
 class JinseSpider(scrapy.Spider):
     name = 'jinse'
@@ -9,22 +18,71 @@ class JinseSpider(scrapy.Spider):
     start_urls = ['https://passport.weibo.cn/signin/login?entry=mweibo&res=wel&wm=3349&r=http%3A%2F%2Fm.weibo.cn%2F']
     def __init__(self):
         self.browser = webdriver.Chrome(executable_path="E:/toolsource/pythontoolsource/chromedriver.exe")
+        self.pageIndex=1
+        # 实例化一个cookiejar对象
+        # self.cookie_jar = CookieJar()
         super(JinseSpider,self).__init__()
     def parse(self, response):
-        return scrapy.Request("https://m.weibo.cn/u/2145291155?uid=2145291155",callback=self.parseUser)
-        # print response.body
-         # jinseitems =response.xpath('//ol [@class="list clearfix"]').extract()
-         # for jinseitem in jinseitems :
-         #     print jinseitem +"\n"
+        # 使用extract_cookies方法可以提取response中的cookie
+        # self.cookie_jar.extract_cookies(response, response.request)
+        # cookiejar是类字典类型的,将它写入到文件中
+        # print "获取到的cookie值 ：" + str(self.cookie_jar)
+        # with open('cookies.txt', 'w') as f:
+        #     for cookie in self.cookie_jar:
+        #         f.write(str(cookie) + '\n')
+        # return scrapy.Request("https://m.weibo.cn/u/2145291155?uid=2145291155",callback=self.parseUser)
+        # print("获取到的cookie值:"+str(self.browser.get_cookies()))
+        return scrapy.Request(
+            "https://m.weibo.cn/api/container/getIndex?uid=2145291155&type=uid&value=2145291155&containerid=1076032145291155&page="+str(self.pageIndex),
+            callback=self.parseUserWeibo)
 
-    def parseUser(self, response):
-        return scrapy.Request("https://m.weibo.cn/api/container/getIndex?uid=2145291155&type=uid&value=2145291155&containerid=1076032145291155&page=100", callback=self.parseUserWeibo)
+    # def parseUser(self, response):
+    #     return scrapy.Request("https://m.weibo.cn/api/container/getIndex?uid=2145291155&type=uid&value=2145291155&containerid=1076032145291155&page=8", callback=self.parseUserWeibo)
         # jinseitems =response.xpath('//ol [@class="list clearfix"]').extract()
         # for jinseitem in jinseitems :
         #     print jinseitem +"\n"
     def parseUserWeibo(self,response):
-        print response.body
+        self.pageIndex=self.pageIndex+1
+        result =json.loads(response.body,encoding="utf-8")
+        if result["ok"]!=1 :
+            return
+        # 得到data
+        data =result["data"]
+        if len(data) :
+            cards = data["cards"]
+            # 得到每个card
+            for card in cards:
+                item = BitaoItem()
+                # 微博详情地址
+                item["source_address"] =card["scheme"].encode('utf-8')
+                # 得到微博内容
+                mblog=card["mblog"]
+                item["publish_time"]=mblog["created_at"].encode('utf-8')
+                item["content"]=mblog["text"].encode('utf-8')
+                print (mblog["text"].encode('utf-8'))
+                item["source_platform"]="weibo"
+                # 得到发布者信息
+                user =mblog["user"]
+                item["publisher_identifier"]=user["id"]
+                item["publisher_nicke_name"]=user["screen_name"].encode('utf-8')
+                item["publisher_avatar"]=user["avatar_hd"].encode('utf-8')
+                item["publisher_desc"]=user["verified_reason"].encode('utf-8')
+                # 得到图片对象
+                try:
+                    pics =mblog["pics"]
+                    item["pics"]=pics
+                except KeyError:
+                    print("该微博没有图片")
+                    item["pics"] = ""
+                yield item
+            yield scrapy.Request(
+                    "https://m.weibo.cn/api/container/getIndex?uid=2145291155&type=uid&value=2145291155&containerid=1076032145291155&page="+str(self.pageIndex),
+                    callback=self.parseUserWeibo)
+        else:
+            return
 
-    def start_requests(self):
-        for url in self.start_urls:
-            yield scrapy.Request(url, cookies={'SUB=_2A253raVjDeRhGeNK7VAU9ibMyj-IHXVVUcsrrDV6PUJbkdAKLRHykW1NSTHSoRqOG_DS9sEmxXsav5R4qIkjW2JY; SUHB=0G0u6ey9_1-kHJ; SCF=AouotuoUWHGbf-lZy9F9XklNFHI2Cg02MgnGV5XKigVYq3AFp-Ypm7NdZI5Rkcx6N4BbeENGS9prGdXxn81MGBM.; SSOLoginState=1521079603; _T_WM=384bcb04b69ecf26cfa6fdb186fec5a3; WEIBOCN_FROM=1110006030; M_WEIBOCN_PARAMS=featurecode%3D20000320%26luicode%3D20000174%26lfid%3Dhotword%26fid%3D1076032145291155%26uicode%3D10000011': 'true'})
+
+    # def start_requests(self):
+    #     for url in self.start_urls:
+    #         # yield scrapy.Request(url, cookies={'SUB=_2A253raVjDeRhGeNK7VAU9ibMyj-IHXVVUcsrrDV6PUJbkdAKLRHykW1NSTHSoRqOG_DS9sEmxXsav5R4qIkjW2JY; SUHB=0G0u6ey9_1-kHJ; SCF=AouotuoUWHGbf-lZy9F9XklNFHI2Cg02MgnGV5XKigVYq3AFp-Ypm7NdZI5Rkcx6N4BbeENGS9prGdXxn81MGBM.; SSOLoginState=1521079603; _T_WM=384bcb04b69ecf26cfa6fdb186fec5a3; WEIBOCN_FROM=1110006030; M_WEIBOCN_PARAMS=featurecode%3D20000320%26luicode%3D20000174%26lfid%3Dhotword%26fid%3D1076032145291155%26uicode%3D10000011': 'true'})
+    #         yield scrapy.Request(url, meta = {'cookiejar' : 1})
