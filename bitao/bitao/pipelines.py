@@ -7,14 +7,14 @@
 
 import MySQLdb
 import json
-
+import  re
 import sys
 
 reload(sys)
 sys.setdefaultencoding('utf-8')
 class BitaoPipeline(object):
     def process_item(self, item, spider):
-        try:
+        # try:
             conn = MySQLdb.Connect(host='localhost', port=3306, user='root', passwd='923469an', db='reptile_metadata',
                                    charset='UTF8');
             cursor = conn.cursor();
@@ -28,7 +28,7 @@ class BitaoPipeline(object):
                            ",publisher_desc,source_platform,source_address) "
                            " VALUES (%(content)s,%(publisher_nicke_name)s,%(publisher_real_name)s "
                            ",%(publisher_avatar)s,%(publish_time)s,%(publisher_identifier)s,%(publisher_desc)s  "
-                           ",%(source_platform)s,%(source_address)s  )",{"content":item["content"].encode('utf-8') if item.has_key("content") else "",
+                           ",%(source_platform)s,%(source_address)s  )",{"content":self.filter_emoji(item["content"]).encode('utf-8') if item.has_key("content") else "",
                             "publisher_nicke_name":item["publisher_nicke_name"] if item.has_key("publisher_nicke_name") else "",
                                                                          "publisher_real_name":""
                             ,"publisher_avatar":item["publisher_avatar"] if item.has_key("publisher_avatar") else "",
@@ -42,8 +42,15 @@ class BitaoPipeline(object):
             cursor.close();
             conn.close();
             return item
-        except:
-            print("管道处理数据异常")
-            return item
+        # except:
+        #     print Error
+        #     print("管道处理数据异常")
+        #     return item
+    def filter_emoji(self,desstr):
+        try:
+            co = re.compile(u'[\U00010000-\U0010ffff]')
+        except re.error:
+            co = re.compile(u'[\uD800-\uDBFF][\uDC00-\uDFFF]')
+        return co.sub("", desstr)
 
 
