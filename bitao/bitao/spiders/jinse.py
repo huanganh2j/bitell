@@ -11,30 +11,28 @@ from selenium import webdriver
 from bitao.items import BitaoItem
 # reload(sys)
 # sys.setdefaultencoding('utf-8')
+from bitao.targetsource import TargetSource
+
 
 class JinseSpider(scrapy.Spider):
     name = 'jinse'
+    id="weibo"
     # allowed_domains = ['https://weibo.com/']
     start_urls = ['https://passport.weibo.cn/signin/login?entry=mweibo&res=wel&wm=3349&r=http%3A%2F%2Fm.weibo.cn%2F']
     def __init__(self):
         self.browser = webdriver.Chrome(executable_path="E:/toolsource/pythontoolsource/chromedriver.exe")
         self.pageIndex=1
-        # 实例化一个cookiejar对象
-        # self.cookie_jar = CookieJar()
+        self.target_url=""
         super(JinseSpider,self).__init__()
     def parse(self, response):
-        # 使用extract_cookies方法可以提取response中的cookie
-        # self.cookie_jar.extract_cookies(response, response.request)
-        # cookiejar是类字典类型的,将它写入到文件中
-        # print "获取到的cookie值 ：" + str(self.cookie_jar)
-        # with open('cookies.txt', 'w') as f:
-        #     for cookie in self.cookie_jar:
-        #         f.write(str(cookie) + '\n')
-        # return scrapy.Request("https://m.weibo.cn/u/2145291155?uid=2145291155",callback=self.parseUser)
-        # print("获取到的cookie值:"+str(self.browser.get_cookies()))
-        return scrapy.Request(
-            "https://m.weibo.cn/api/container/getIndex?uid=2145291155&type=uid&value=2145291155&containerid=1076032145291155&page="+str(self.pageIndex),
-            callback=self.parseUserWeibo)
+        self.target_url =TargetSource.getTarget()
+        if len(self.target_url):
+            return scrapy.Request(
+                self.target_url+str(self.pageIndex),
+                callback=self.parseUserWeibo)
+        else:
+            print "没有获取到爬取目标"
+            return
 
     # def parseUser(self, response):
     #     return scrapy.Request("https://m.weibo.cn/api/container/getIndex?uid=2145291155&type=uid&value=2145291155&containerid=1076032145291155&page=8", callback=self.parseUserWeibo)
@@ -42,14 +40,22 @@ class JinseSpider(scrapy.Spider):
         # for jinseitem in jinseitems :
         #     print jinseitem +"\n"
     def parseUserWeibo(self,response):
-        print "result" + response.body
         responsestr = str(response.body)
         responsestr_h =self.filter_emoji(responsestr)
         print responsestr_h
         self.pageIndex=self.pageIndex+1
         result =json.loads(responsestr_h,encoding="utf-8")
         if result["ok"]!=1 :
-            return
+            self.pageIndex = 1
+            print "进行下一个目标爬取"
+            self.target_url = TargetSource.getTarget()
+            if len(self.target_url):
+                yield scrapy.Request(
+                    self.target_url + str(self.pageIndex),
+                    callback=self.parseUserWeibo)
+            else:
+                print "没有获取到爬取目标"
+                return
         # 得到data
         data =result["data"]
         if len(data) :
@@ -80,7 +86,7 @@ class JinseSpider(scrapy.Spider):
                     item["pics"] = ""
                 yield item
             yield scrapy.Request(
-                    "https://m.weibo.cn/api/container/getIndex?uid=2145291155&type=uid&value=2145291155&containerid=1076032145291155&page="+str(self.pageIndex),
+                    self.target_url+str(self.pageIndex),
                     callback=self.parseUserWeibo)
         else:
             return
