@@ -10,7 +10,7 @@ class TargetSource(object):
                                charset='UTF8');
         target_url=""
         cursor = conn.cursor()
-        cursor.execute(" SELECT target_url,user_id from weibo_target_list where is_handle=1 ORDER BY create_time desc limit 1 ")
+        cursor.execute(" SELECT target_url,user_id from weibo_target_list where is_handle=1 ORDER BY create_time limit 1 ")
         data = cursor.fetchone()
         if data is not None and len(data):
             target_url = data[0]

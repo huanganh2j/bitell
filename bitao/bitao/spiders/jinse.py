@@ -62,7 +62,10 @@ class JinseSpider(scrapy.Spider):
             cards = data["cards"]
             # 得到每个card
             for card in cards:
+                if card["card_type"]!= 9:
+                    continue;
                 item = BitaoItem()
+                item["content_id"]=card["itemid"]
                 # 微博详情地址
                 item["source_address"] =card["scheme"]
                 # 得到微博内容

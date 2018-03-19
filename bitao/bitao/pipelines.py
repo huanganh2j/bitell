@@ -19,16 +19,11 @@ class BitaoPipeline(object):
                                    charset='UTF8');
             cursor = conn.cursor();
             item=dict(item)
-            if len(item["pics"]) :
-                pics =item["pics"]
-                for pic in pics:
-                    small = pic["url"]
-                    large = pic["large"]["url"]
             cursor.execute(" insert reptile_source(content,publisher_nicke_name,publisher_real_name,publisher_avatar,publish_time,publisher_identifier"
-                           ",publisher_desc,source_platform,source_address) "
+                           ",publisher_desc,source_platform,source_address,content_id) "
                            " VALUES (%(content)s,%(publisher_nicke_name)s,%(publisher_real_name)s "
                            ",%(publisher_avatar)s,%(publish_time)s,%(publisher_identifier)s,%(publisher_desc)s  "
-                           ",%(source_platform)s,%(source_address)s  )",{"content":self.filter_emoji(item["content"]).encode('utf-8') if item.has_key("content") else "",
+                           ",%(source_platform)s,%(source_address)s,%(content_id)s  )",{"content":self.filter_emoji(item["content"]).encode('utf-8') if item.has_key("content") else "",
                             "publisher_nicke_name":item["publisher_nicke_name"] if item.has_key("publisher_nicke_name") else "",
                                                                          "publisher_real_name":""
                             ,"publisher_avatar":item["publisher_avatar"] if item.has_key("publisher_avatar") else "",
@@ -36,8 +31,22 @@ class BitaoPipeline(object):
                                                                          "publisher_identifier": item["publisher_identifier"] if item.has_key("publisher_identifier") else "",
                                                                          "publisher_desc": item["publisher_desc"] if item.has_key("publisher_desc") else "微博 weibo.com",
                                                                          "source_platform": item["source_platform"] if item.has_key("source_platform") else "",
-                                                                         "source_address": item["source_address"] if item.has_key("source_address") else ""
+                                                                         "source_address": item["source_address"] if item.has_key("source_address") else "",
+                                                                         "content_id": item["content_id"] if item.has_key("content_id") else ""
                                                                          })
+
+            cursor.execute(" select id from reptile_source where content_id='"+item["content_id"]+"' limit 1 ")
+            queryData = cursor.fetchone()
+            if len(item["pics"]):
+                pics = item["pics"]
+                sortindex=1
+                for pic in pics:
+                    small = pic["url"]
+                    large = pic["large"]["url"]
+                    cursor.execute("insert into reptile_source_pics(reptile_source_id,pic_url,big_pic_url,sort) VALUES "
+                           "(%(reptile_source_id)s,%(pic_url)s,%(big_pic_url)s,%(sort)s)",
+                           {"reptile_source_id":queryData[0],"pic_url":small,"big_pic_url":large,"sort":sortindex})
+                    sortindex=sortindex+1
             conn.commit();
             cursor.close();
             conn.close();

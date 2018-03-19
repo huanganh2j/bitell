@@ -69,6 +69,11 @@ ITEM_PIPELINES = {
    'bitao.pipelines.BitaoPipeline': 300,
 }
 
+MYSQL_HOST = "127.0.0.1"
+MYSQL_DBNAME = "reptile_metadata"
+MYSQL_USER = "root"
+MYSQL_PASSWORD = "923469an"
+
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://doc.scrapy.org/en/latest/topics/autothrottle.html
 #AUTOTHROTTLE_ENABLED = True
