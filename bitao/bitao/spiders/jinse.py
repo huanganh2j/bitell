@@ -5,7 +5,7 @@ import re
 import sys
 from scrapy.http.cookies import CookieJar
 import json
-
+import datetime
 from selenium import webdriver
 
 from bitao.items import BitaoItem
@@ -70,7 +70,44 @@ class JinseSpider(scrapy.Spider):
                 item["source_address"] =card["scheme"]
                 # 得到微博内容
                 mblog=card["mblog"]
-                item["publish_time"]=mblog["created_at"]
+                publish_time = mblog["created_at"]
+                if publish_time is not None and len(publish_time):
+                    # publish_time=publish_time.encode("utf8")
+                    timestr = publish_time.split('-')
+                    publishDateTime=None
+                    now =datetime.datetime.now()
+                    if len(timestr)==2:
+                        year = now.year
+                        publishDateTime = datetime.datetime(year, int(str(timestr[0])), int(str(timestr[1])))
+                        intertime = (now - publishDateTime).days
+                        if intertime > 1:
+                            # 如果爬取内容时间 距离当前时间1天则不再爬取 ，直接进入下一个爬取目标
+                            self.pageIndex = 1
+                            print "进行下一个目标爬取"
+                            self.target_url = TargetSource.getTarget()
+                            if len(self.target_url):
+                                yield scrapy.Request(
+                                    self.target_url + str(self.pageIndex),
+                                    callback=self.parseUserWeibo)
+                            else:
+                                print "没有获取到爬取目标"
+                                return
+                    elif len(timestr)==3:
+                        publishDateTime = datetime.datetime(int(str(timestr[0])), int(str(timestr[1])), int(str(timestr[2])))
+                        intertime = (now - publishDateTime).days
+                        if intertime > 1:
+                            # 如果爬取内容时间 距离当前时间1天则不再爬取 ，直接进入下一个爬取目标
+                            self.pageIndex = 1
+                            print "进行下一个目标爬取"
+                            self.target_url = TargetSource.getTarget()
+                            if len(self.target_url):
+                                yield scrapy.Request(
+                                    self.target_url + str(self.pageIndex),
+                                    callback=self.parseUserWeibo)
+                            else:
+                                print "没有获取到爬取目标"
+                                return
+                    item["publish_time"]=publish_time
                 item["content"]=mblog["text"]
                 print (mblog["text"])
                 item["source_platform"]="weibo"
