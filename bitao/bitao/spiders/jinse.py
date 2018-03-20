@@ -57,6 +57,7 @@ class JinseSpider(scrapy.Spider):
                 print "没有获取到爬取目标"
                 return
         # 得到data
+        donext=False
         data =result["data"]
         if len(data) :
             cards = data["cards"]
@@ -82,41 +83,48 @@ class JinseSpider(scrapy.Spider):
                         intertime = (now - publishDateTime).days
                         if intertime > 1:
                             # 如果爬取内容时间 距离当前时间1天则不再爬取 ，直接进入下一个爬取目标
-                            self.pageIndex = 1
-                            print "进行下一个目标爬取"
-                            self.target_url = TargetSource.getTarget()
-                            if len(self.target_url):
-                                yield scrapy.Request(
-                                    self.target_url + str(self.pageIndex),
-                                    callback=self.parseUserWeibo)
-                            else:
-                                print "没有获取到爬取目标"
-                                return
+                            donext=True
+                            break
+                            # self.pageIndex = 1
+                            # print "进行下一个目标爬取"
+                            # self.target_url = TargetSource.getTarget()
+                            # if len(self.target_url):
+                            #     yield scrapy.Request(
+                            #         self.target_url + str(self.pageIndex),
+                            #         callback=self.parseUserWeibo)
+                            # else:
+                            #     print "没有获取到爬取目标"
+                            #     return
                     elif len(timestr)==3:
                         publishDateTime = datetime.datetime(int(str(timestr[0])), int(str(timestr[1])), int(str(timestr[2])))
                         intertime = (now - publishDateTime).days
                         if intertime > 1:
                             # 如果爬取内容时间 距离当前时间1天则不再爬取 ，直接进入下一个爬取目标
-                            self.pageIndex = 1
-                            print "进行下一个目标爬取"
-                            self.target_url = TargetSource.getTarget()
-                            if len(self.target_url):
-                                yield scrapy.Request(
-                                    self.target_url + str(self.pageIndex),
-                                    callback=self.parseUserWeibo)
-                            else:
-                                print "没有获取到爬取目标"
-                                return
+                            donext = True
+                            break
+                            # self.pageIndex = 1
+                            # print "进行下一个目标爬取"
+                            # self.target_url = TargetSource.getTarget()
+                            # if len(self.target_url):
+                            #     yield scrapy.Request(
+                            #         self.target_url + str(self.pageIndex),
+                            #         callback=self.parseUserWeibo)
+                            # else:
+                            #     print "没有获取到爬取目标"
+                            #     return
                     item["publish_time"]=publish_time
                 item["content"]=mblog["text"]
-                print (mblog["text"])
+                # print (mblog["text"])
                 item["source_platform"]="weibo"
                 # 得到发布者信息
                 user =mblog["user"]
                 item["publisher_identifier"]=user["id"]
                 item["publisher_nicke_name"]=user["screen_name"]
                 item["publisher_avatar"]=user["avatar_hd"]
-                item["publisher_desc"]=user["verified_reason"]
+                if user.has_key("verified_reason"):
+                    item["publisher_desc"]=user["verified_reason"]
+                if user.has_key("description"):
+                    item["publisher_desc"] = user["description"]
                 # 得到图片对象
                 try:
                     pics =mblog["pics"]
@@ -125,9 +133,21 @@ class JinseSpider(scrapy.Spider):
                     print("该微博没有图片")
                     item["pics"] = ""
                 yield item
-            yield scrapy.Request(
-                    self.target_url+str(self.pageIndex),
-                    callback=self.parseUserWeibo)
+            if donext==True:
+                self.pageIndex = 1
+                print "进行下一个目标爬取"
+                self.target_url = TargetSource.getTarget()
+                if len(self.target_url):
+                    yield scrapy.Request(
+                        self.target_url + str(self.pageIndex),
+                        callback=self.parseUserWeibo)
+                else:
+                    print "没有获取到爬取目标"
+                    return
+            else:
+                yield scrapy.Request(
+                        self.target_url+str(self.pageIndex),
+                        callback=self.parseUserWeibo)
         else:
             return
 
