@@ -20,7 +20,8 @@ class JinseSpider(scrapy.Spider):
     # allowed_domains = ['https://weibo.com/']
     start_urls = ['https://passport.weibo.cn/signin/login?entry=mweibo&res=wel&wm=3349&r=http%3A%2F%2Fm.weibo.cn%2F']
     def __init__(self):
-        self.browser = webdriver.Chrome(executable_path="E:/toolsource/pythontoolsource/chromedriver.exe")
+        # self.browser = webdriver.Chrome(executable_path="E:/toolsource/pythontoolsource/chromedriver.exe")
+        self.browser = webdriver.Chrome(executable_path="C:/toolsource/chromedriver.exe")
         self.pageIndex=1
         self.target_url=""
         super(JinseSpider,self).__init__()
