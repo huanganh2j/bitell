@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from scrapy import signals
 from scrapy import cmdline
+from scrapy.utils.project import get_project_settings
 from twisted.internet import reactor, defer
 import time
 from scrapy.exceptions import NotConfigured
@@ -16,8 +17,9 @@ class SpiderOpenCloseLogging(object):
         return ext
 
     def spider_closed(self, spider):
+        settings = get_project_settings()
         print "spider "+spider.id+"关闭信号接收"
-        conn = MySQLdb.Connect(host='localhost', port=3306, user='root', passwd='923469an', db='reptile_metadata',
+        conn = MySQLdb.Connect(host=settings["MYSQL_HOST"], port=3306, user=settings["MYSQL_USER"], passwd=settings["MYSQL_PASSWORD"], db=settings["MYSQL_DBNAME"],
                                charset='UTF8');
         cursor = conn.cursor()
         # 修改处理状态

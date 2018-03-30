@@ -26,3 +26,4 @@ class BitaoItem(scrapy.Item):
     source_address = scrapy.Field()
     content_id = scrapy.Field()
     pics=scrapy.Field()
+    page_info=scrapy.Field()

@@ -20,8 +20,8 @@ class JinseSpider(scrapy.Spider):
     # allowed_domains = ['https://weibo.com/']
     start_urls = ['https://passport.weibo.cn/signin/login?entry=mweibo&res=wel&wm=3349&r=http%3A%2F%2Fm.weibo.cn%2F']
     def __init__(self):
-        # self.browser = webdriver.Chrome(executable_path="E:/toolsource/pythontoolsource/chromedriver.exe")
-        self.browser = webdriver.Chrome(executable_path="C:/toolsource/chromedriver.exe")
+        self.browser = webdriver.Chrome(executable_path="E:/toolsource/pythontoolsource/chromedriver.exe")
+        # self.browser = webdriver.Chrome(executable_path="C:/toolsource/chromedriver.exe")
         self.pageIndex=1
         self.target_url=""
         super(JinseSpider,self).__init__()
@@ -127,12 +127,34 @@ class JinseSpider(scrapy.Spider):
                 if user.has_key("description"):
                     item["publisher_desc"] = user["description"]
                 # 得到图片对象
-                try:
-                    pics =mblog["pics"]
-                    item["pics"]=pics
-                except KeyError:
+                if mblog.has_key("pics"):
+                    pics = mblog["pics"]
+                    item["pics"] = pics
+                else:
                     print("该微博没有图片")
                     item["pics"] = ""
+                if mblog.has_key("page_info"):
+                    # page_info =mblog["page_info"]
+                    # if page_info.has_key("page_pic"):
+                    #     page_pic = page_info["page_pic"]
+                    # else:
+                    #     print("该微博没有视频")
+                    page_info = mblog["page_info"]
+                    weibo_type = page_info["type"]
+                    if weibo_type == "video":
+                        item["page_info"] = page_info
+                    else:
+                        print("该微博没有视频")
+                        item["page_info"] = ""
+                else:
+                    print("该微博没有视频")
+                    item["page_info"] =""
+                # try:
+                #     pics =mblog["pics"]
+                #     item["pics"]=pics
+                # except KeyError:
+                #     print("该微博没有图片")
+                #     item["pics"] = ""
                 yield item
             if donext==True:
                 self.pageIndex = 1

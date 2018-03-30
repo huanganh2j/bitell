@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
 import MySQLdb
+from scrapy.utils.project import get_project_settings
+
+
 class TargetSource(object):
     def __init__(self):
         super(TargetSource, self).__init__()
 
     @classmethod
     def getTarget(cls):
-        conn = MySQLdb.Connect(host='localhost', port=3306, user='root', passwd='923469an', db='reptile_metadata',
+        settings = get_project_settings()
+        # conn = MySQLdb.Connect(host='localhost', port=3306, user='root', passwd='923469an', db='reptile_metadata',
+        #                        charset='UTF8');
+        conn = MySQLdb.Connect(host=settings["MYSQL_HOST"], port=3306, user=settings["MYSQL_USER"], passwd=settings["MYSQL_PASSWORD"], db=settings["MYSQL_DBNAME"],
                                charset='UTF8');
         target_url=""
         cursor = conn.cursor()
