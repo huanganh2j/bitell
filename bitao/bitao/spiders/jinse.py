@@ -67,11 +67,12 @@ class JinseSpider(scrapy.Spider):
                 if card["card_type"]!= 9:
                     continue;
                 item = BitaoItem()
-                item["content_id"]=card["itemid"]
+                # item["content_id"]=card["itemid"]
                 # 微博详情地址
                 item["source_address"] =card["scheme"]
                 # 得到微博内容
                 mblog=card["mblog"]
+                item["content_id"] = mblog["id"]
                 publish_time = mblog["created_at"]
                 if publish_time is not None and len(publish_time):
                     # publish_time=publish_time.encode("utf8")
@@ -86,16 +87,6 @@ class JinseSpider(scrapy.Spider):
                             # 如果爬取内容时间 距离当前时间1天则不再爬取 ，直接进入下一个爬取目标
                             donext=True
                             break
-                            # self.pageIndex = 1
-                            # print "进行下一个目标爬取"
-                            # self.target_url = TargetSource.getTarget()
-                            # if len(self.target_url):
-                            #     yield scrapy.Request(
-                            #         self.target_url + str(self.pageIndex),
-                            #         callback=self.parseUserWeibo)
-                            # else:
-                            #     print "没有获取到爬取目标"
-                            #     return
                     elif len(timestr)==3:
                         publishDateTime = datetime.datetime(int(str(timestr[0])), int(str(timestr[1])), int(str(timestr[2])))
                         intertime = (now - publishDateTime).days
@@ -103,16 +94,6 @@ class JinseSpider(scrapy.Spider):
                             # 如果爬取内容时间 距离当前时间1天则不再爬取 ，直接进入下一个爬取目标
                             donext = True
                             break
-                            # self.pageIndex = 1
-                            # print "进行下一个目标爬取"
-                            # self.target_url = TargetSource.getTarget()
-                            # if len(self.target_url):
-                            #     yield scrapy.Request(
-                            #         self.target_url + str(self.pageIndex),
-                            #         callback=self.parseUserWeibo)
-                            # else:
-                            #     print "没有获取到爬取目标"
-                            #     return
                     item["publish_time"]=publish_time
                 item["content"]=mblog["text"]
                 # print (mblog["text"])
@@ -149,12 +130,12 @@ class JinseSpider(scrapy.Spider):
                 else:
                     print("该微博没有视频")
                     item["page_info"] =""
-                # try:
-                #     pics =mblog["pics"]
-                #     item["pics"]=pics
-                # except KeyError:
-                #     print("该微博没有图片")
-                #     item["pics"] = ""
+                if mblog.has_key("retweeted_status"):
+                    retweeted_status = mblog["retweeted_status"]
+                    item["retweeted_status"]=retweeted_status
+                    print "该微博是转发的微博"
+                else:
+                    item["retweeted_status"]=""
                 yield item
             if donext==True:
                 self.pageIndex = 1

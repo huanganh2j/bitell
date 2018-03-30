@@ -27,3 +27,4 @@ class BitaoItem(scrapy.Item):
     content_id = scrapy.Field()
     pics=scrapy.Field()
     page_info=scrapy.Field()
+    retweeted_status = scrapy.Field()
